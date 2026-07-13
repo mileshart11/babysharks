@@ -10,6 +10,8 @@ export interface NflTeam {
   city: string
   name: string
   logo_url: string | null
+  primary_color: string | null
+  secondary_color: string | null
 }
 
 export type GameStatus = 'scheduled' | 'in_progress' | 'final'
@@ -29,6 +31,8 @@ export interface Game {
   created_at: string
 }
 
+export type SharkType = 'baby' | 'pet'
+
 export interface BabyShark {
   id: string
   owner_id: string
@@ -36,6 +40,7 @@ export interface BabyShark {
   bio: string | null
   avatar_url: string | null
   search_code: string | null
+  shark_type: SharkType | null
   created_at: string
 }
 

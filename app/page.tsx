@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { computeRecord } from '@/lib/records'
 import { relativeTime } from '@/lib/time'
+import { SharkAvatar } from '@/components/shark-avatar'
+import { TeamLogo } from '@/components/team-logo'
 import type { BabyShark, Game, NflTeam, Pick } from '@/lib/supabase/types'
 
 const FEATURES = [
@@ -112,8 +114,16 @@ export default async function Home() {
                     key={game.id}
                     className="flex items-center justify-between gap-2 text-sm text-navy"
                   >
-                    <span>
-                      {away?.city} {away?.name} @ {home?.city} {home?.name}
+                    <span className="flex items-center gap-2">
+                      <TeamLogo team={away} size={24} />
+                      <span>
+                        {away?.city} {away?.name}
+                      </span>
+                      <span className="text-navy/40">@</span>
+                      <TeamLogo team={home} size={24} />
+                      <span>
+                        {home?.city} {home?.name}
+                      </span>
                     </span>
                     <Link
                       href={user ? '/' : '/signup'}
@@ -250,11 +260,8 @@ export default async function Home() {
               <li key={pick.id}>
                 <article className="rounded-2xl border border-fog bg-white p-4 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <Link
-                      href={`/baby-sharks/${shark.id}`}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue font-display text-lg text-white"
-                    >
-                      {shark.name.charAt(0).toUpperCase()}
+                    <Link href={`/baby-sharks/${shark.id}`}>
+                      <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={44} />
                     </Link>
                     <div>
                       <Link

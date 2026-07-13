@@ -18,3 +18,14 @@ export function computeRecord(babySharkId: string, picks: Pick[], games: Game[])
 
   return { wins, losses, pushes }
 }
+
+export function rankSharks<T extends { id: string }>(sharks: T[], picks: Pick[], games: Game[]) {
+  return sharks
+    .map((shark) => {
+      const record = computeRecord(shark.id, picks, games)
+      const played = record.wins + record.losses + record.pushes
+      const winPct = played > 0 ? record.wins / played : 0
+      return { shark, ...record, winPct }
+    })
+    .sort((a, b) => b.wins - a.wins || b.winPct - a.winPct || a.losses - b.losses)
+}

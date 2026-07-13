@@ -39,6 +39,17 @@ export default async function NewBabySharkPage(props: {
           Bio (optional)
           <textarea name="bio" rows={3} className="rounded border px-3 py-2" />
         </label>
+        <fieldset className="flex flex-col gap-2 text-sm">
+          <legend className="mb-1">Type</legend>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="shark_type" value="baby" required />
+            Baby Shark (a child, under 12)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" name="shark_type" value="pet" required />
+            Pet Shark (a pet)
+          </label>
+        </fieldset>
         <SubmitButton
           pendingText="Creating…"
           className="rounded bg-black px-4 py-2 text-white hover:bg-zinc-800"

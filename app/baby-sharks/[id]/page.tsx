@@ -4,10 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import {
   followBabyShark,
   unfollowBabyShark,
-  makePick,
+  deletePick,
 } from '@/app/baby-sharks/actions'
 import { computeRecord } from '@/lib/records'
 import { SubmitButton } from '@/components/submit-button'
+import { SharkAvatar } from '@/components/shark-avatar'
+import { TeamLogo } from '@/components/team-logo'
 import type { Game, NflTeam, Pick } from '@/lib/supabase/types'
 
 function teamLabel(team: NflTeam | undefined) {
@@ -71,11 +73,17 @@ export default async function BabySharkPage(props: {
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-12">
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold">{shark.name}</h1>
-            <p className="text-sm text-zinc-600">
-              Managed by @{owner?.username ?? 'unknown'}
-            </p>
+          <div className="flex items-center gap-3">
+            <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={56} />
+            <div>
+              <h1 className="text-2xl font-semibold">{shark.name}</h1>
+              <p className="text-sm text-zinc-600">
+                Managed by @{owner?.username ?? 'unknown'}
+                {shark.shark_type && (
+                  <> &middot; {shark.shark_type === 'baby' ? 'Baby Shark' : 'Pet Shark'}</>
+                )}
+              </p>
+            </div>
           </div>
           {isOwner ? (
             <Link
@@ -113,72 +121,71 @@ export default async function BabySharkPage(props: {
       <section className="flex flex-col gap-6">
         {[...gamesByWeek.entries()].map(([week, weekGames]) => (
           <div key={week} className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold">Week {week}</h2>
+            <h2 className="font-display text-lg text-navy">Week {week}</h2>
             <ul className="flex flex-col gap-3">
               {weekGames.map((game) => {
                 const home = teamsById.get(game.home_team_id)
                 const away = teamsById.get(game.away_team_id)
                 const pick = picksByGameId.get(game.id)
                 const kickoff = new Date(game.kickoff_at)
+                const awayPicked = pick?.picked_team_id === game.away_team_id
+                const homePicked = pick?.picked_team_id === game.home_team_id
 
                 return (
-                  <li key={game.id} className="rounded border p-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>
-                        {teamLabel(away)} @ {teamLabel(home)}
-                      </span>
-                      <span className="text-zinc-500">
-                        {kickoff.toLocaleString(undefined, {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                  <li
+                    key={game.id}
+                    className="rounded-2xl border border-fog bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <div
+                        className={`flex flex-1 flex-col items-center gap-1 rounded-xl p-2 text-center ${awayPicked ? 'bg-sky/20' : ''}`}
+                      >
+                        <TeamLogo team={away} size={48} />
+                        <span className="text-xs font-medium text-navy">{teamLabel(away)}</span>
+                      </div>
+                      <span className="font-display text-sm text-navy/40">@</span>
+                      <div
+                        className={`flex flex-1 flex-col items-center gap-1 rounded-xl p-2 text-center ${homePicked ? 'bg-sky/20' : ''}`}
+                      >
+                        <TeamLogo team={home} size={48} />
+                        <span className="text-xs font-medium text-navy">{teamLabel(home)}</span>
+                      </div>
                     </div>
+                    <p className="mt-2 text-center text-xs text-navy/50">
+                      {kickoff.toLocaleString(undefined, {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
 
                     {isOwner ? (
-                      <form
-                        action={makePick}
-                        className="mt-3 flex items-center gap-3 text-sm"
-                      >
-                        <input type="hidden" name="baby_shark_id" value={shark.id} />
-                        <input type="hidden" name="game_id" value={game.id} />
-                        <label className="flex items-center gap-1">
-                          <input
-                            type="radio"
-                            name="picked_team_id"
-                            value={game.away_team_id}
-                            defaultChecked={pick?.picked_team_id === game.away_team_id}
-                            required
-                          />
-                          {teamLabel(away)}
-                        </label>
-                        <label className="flex items-center gap-1">
-                          <input
-                            type="radio"
-                            name="picked_team_id"
-                            value={game.home_team_id}
-                            defaultChecked={pick?.picked_team_id === game.home_team_id}
-                            required
-                          />
-                          {teamLabel(home)}
-                        </label>
-                        <SubmitButton
-                          pendingText="Saving…"
-                          className="rounded bg-black px-3 py-1.5 text-white hover:bg-zinc-800"
+                      <div className="mt-3 flex items-center justify-center gap-2">
+                        <Link
+                          href={`/baby-sharks/${shark.id}/tap-pick/${game.id}`}
+                          className="rounded-full bg-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue/90"
                         >
-                          {pick ? 'Update pick' : 'Pick'}
-                        </SubmitButton>
-                      </form>
+                          {pick ? '🖐️ Change Pick' : '🖐️ Tap to Pick'}
+                        </Link>
+                        {pick && (
+                          <form action={deletePick}>
+                            <input type="hidden" name="baby_shark_id" value={shark.id} />
+                            <input type="hidden" name="game_id" value={game.id} />
+                            <SubmitButton
+                              pendingText="Removing…"
+                              className="rounded-full border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                            >
+                              Delete pick
+                            </SubmitButton>
+                          </form>
+                        )}
+                      </div>
                     ) : (
-                      <p className="mt-2 text-sm text-zinc-600">
-                        Pick:{' '}
-                        {pick
-                          ? teamLabel(teamsById.get(pick.picked_team_id))
-                          : 'No pick yet'}
-                      </p>
+                      !pick && (
+                        <p className="mt-3 text-center text-sm text-navy/50">No pick yet</p>
+                      )
                     )}
                   </li>
                 )

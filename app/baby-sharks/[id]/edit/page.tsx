@@ -47,6 +47,41 @@ export default async function EditBabySharkPage(props: {
             className="rounded border px-3 py-2"
           />
         </label>
+        <fieldset className="flex flex-col gap-2 text-sm">
+          <legend className="mb-1">Type</legend>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="shark_type"
+              value="baby"
+              required
+              defaultChecked={shark.shark_type === 'baby'}
+            />
+            Baby Shark (a child, under 12)
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="shark_type"
+              value="pet"
+              required
+              defaultChecked={shark.shark_type === 'pet'}
+            />
+            Pet Shark (a pet)
+          </label>
+        </fieldset>
+        <label className="flex flex-col gap-1 text-sm">
+          Profile picture
+          {shark.avatar_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={shark.avatar_url}
+              alt={shark.name}
+              className="mb-1 h-20 w-20 rounded-full object-cover"
+            />
+          )}
+          <input name="avatar" type="file" accept="image/*" className="text-sm" />
+        </label>
         <SubmitButton
           pendingText="Saving…"
           className="rounded-full bg-blue px-4 py-2 font-semibold text-white hover:bg-blue/90"

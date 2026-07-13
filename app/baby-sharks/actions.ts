@@ -10,6 +10,7 @@ const UNIQUE_VIOLATION = '23505'
 export async function createBabyShark(formData: FormData) {
   const name = String(formData.get('name') ?? '').trim()
   const bio = String(formData.get('bio') ?? '').trim()
+  const sharkType = String(formData.get('shark_type') ?? '')
 
   const supabase = await createClient()
   const {
@@ -20,6 +21,9 @@ export async function createBabyShark(formData: FormData) {
   if (!name) {
     redirect('/baby-sharks/new?error=' + encodeURIComponent('Name is required.'))
   }
+  if (sharkType !== 'baby' && sharkType !== 'pet') {
+    redirect('/baby-sharks/new?error=' + encodeURIComponent('Please choose Baby Shark or Pet Shark.'))
+  }
 
   let data: { id: string } | null = null
   let error: { code?: string; message: string } | null = null
@@ -27,7 +31,13 @@ export async function createBabyShark(formData: FormData) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const result = await supabase
       .from('baby_sharks')
-      .insert({ owner_id: user.id, name, bio: bio || null, search_code: generateSearchCode() })
+      .insert({
+        owner_id: user.id,
+        name,
+        bio: bio || null,
+        shark_type: sharkType,
+        search_code: generateSearchCode(),
+      })
       .select('id')
       .single()
 
@@ -51,6 +61,8 @@ export async function updateBabyShark(formData: FormData) {
   const id = String(formData.get('id') ?? '')
   const name = String(formData.get('name') ?? '').trim()
   const bio = String(formData.get('bio') ?? '').trim()
+  const sharkType = String(formData.get('shark_type') ?? '')
+  const avatar = formData.get('avatar')
 
   const supabase = await createClient()
   const {
@@ -61,10 +73,36 @@ export async function updateBabyShark(formData: FormData) {
   if (!name) {
     redirect(`/baby-sharks/${id}/edit?error=` + encodeURIComponent('Name is required.'))
   }
+  if (sharkType !== 'baby' && sharkType !== 'pet') {
+    redirect(
+      `/baby-sharks/${id}/edit?error=` +
+        encodeURIComponent('Please choose Baby Shark or Pet Shark.')
+    )
+  }
+
+  const update: Record<string, string | null> = { name, bio: bio || null, shark_type: sharkType }
+
+  if (avatar instanceof File && avatar.size > 0) {
+    const extension = avatar.name.split('.').pop() || 'jpg'
+    const path = `${id}/avatar-${Date.now()}.${extension}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, avatar, { contentType: avatar.type })
+
+    if (uploadError) {
+      redirect(
+        `/baby-sharks/${id}/edit?error=` +
+          encodeURIComponent('Could not upload profile picture: ' + uploadError.message)
+      )
+    }
+
+    update.avatar_url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+  }
 
   const { error } = await supabase
     .from('baby_sharks')
-    .update({ name, bio: bio || null })
+    .update(update)
     .eq('id', id)
     .eq('owner_id', user.id)
 
@@ -134,6 +172,27 @@ export async function makePick(formData: FormData) {
     )
 
   if (error) console.error('makePick error:', error)
+
+  revalidatePath(`/baby-sharks/${babySharkId}`)
+}
+
+export async function deletePick(formData: FormData) {
+  const babySharkId = String(formData.get('baby_shark_id') ?? '')
+  const gameId = String(formData.get('game_id') ?? '')
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('picks')
+    .delete()
+    .eq('baby_shark_id', babySharkId)
+    .eq('game_id', gameId)
+
+  if (error) console.error('deletePick error:', error)
 
   revalidatePath(`/baby-sharks/${babySharkId}`)
 }

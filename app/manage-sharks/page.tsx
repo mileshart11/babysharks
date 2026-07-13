@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { SharkAvatar } from '@/components/shark-avatar'
 
 export default async function ManageSharksPage() {
   const supabase = await createClient()
@@ -34,14 +35,18 @@ export default async function ManageSharksPage() {
               key={shark.id}
               className="flex flex-col gap-3 rounded-xl border border-fog p-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
-                <p className="font-display text-lg text-navy">{shark.name}</p>
-                {shark.bio && <p className="text-sm text-navy/60">{shark.bio}</p>}
-                {shark.search_code && (
-                  <p className="text-xs text-navy/50">
-                    Search code: <span className="font-mono font-semibold">{shark.search_code}</span>
-                  </p>
-                )}
+              <div className="flex items-center gap-3">
+                <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={48} />
+                <div>
+                  <p className="font-display text-lg text-navy">{shark.name}</p>
+                  {shark.bio && <p className="text-sm text-navy/60">{shark.bio}</p>}
+                  {shark.search_code && (
+                    <p className="text-xs text-navy/50">
+                      Search code:{' '}
+                      <span className="font-mono font-semibold">{shark.search_code}</span>
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 text-sm font-semibold">
                 <Link
