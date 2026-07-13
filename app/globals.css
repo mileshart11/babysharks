@@ -3,13 +3,30 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Brand palette, pulled from the BabySharks moodboard */
+  --color-sky: #7ecbea;
+  --color-blue: #2e8fe6;
+  --color-navy: #0e3b6e;
+  --color-teal: #3fb6ae;
+  --color-gold: #ffce3d;
+  --color-coral: #ff6b6b;
+  --color-fog: #e4e9ee;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-sky: var(--color-sky);
+  --color-blue: var(--color-blue);
+  --color-navy: var(--color-navy);
+  --color-teal: var(--color-teal);
+  --color-gold: var(--color-gold);
+  --color-coral: var(--color-coral);
+  --color-fog: var(--color-fog);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fredoka);
 }
 
 @media (prefers-color-scheme: dark) {
