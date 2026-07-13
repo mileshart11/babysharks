@@ -112,9 +112,9 @@ export default async function Home() {
                 return (
                   <li
                     key={game.id}
-                    className="flex items-center justify-between gap-2 text-sm text-navy"
+                    className="flex flex-col gap-2 text-sm text-navy sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <TeamLogo team={away} size={24} />
                       <span>
                         {away?.city} {away?.name}
@@ -127,7 +127,7 @@ export default async function Home() {
                     </span>
                     <Link
                       href={user ? '/' : '/signup'}
-                      className="shrink-0 rounded-full bg-blue px-3 py-1 text-xs font-semibold text-white hover:bg-blue/90"
+                      className="self-start shrink-0 rounded-full bg-blue px-3 py-1 text-xs font-semibold text-white hover:bg-blue/90 sm:self-auto"
                     >
                       Pick Now
                     </Link>

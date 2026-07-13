@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
 import { SubmitButton } from '@/components/submit-button'
+import { MobileNavMenu } from '@/components/mobile-nav-menu'
 
 const BASE_NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -37,15 +38,15 @@ export async function Nav() {
 
   return (
     <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2">
-        <Link href="/" className="flex items-center">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 sm:gap-4 sm:py-2">
+        <Link href="/" className="flex shrink-0 items-center">
           <Image
             src="/logo-nav.png"
             alt="Baby Sharks"
             width={202}
             height={80}
             priority
-            className="h-20 w-auto"
+            className="h-12 w-auto sm:h-20"
           />
         </Link>
 
@@ -57,7 +58,7 @@ export async function Nav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <>
               <span className="hidden text-sm text-navy/70 sm:inline">
@@ -66,7 +67,7 @@ export async function Nav() {
               <form action={signOut}>
                 <SubmitButton
                   pendingText="Logging out…"
-                  className="rounded-full border border-blue px-4 py-1.5 text-sm font-semibold text-blue hover:bg-blue/5"
+                  className="rounded-full border border-blue px-3 py-2 text-sm font-semibold text-blue hover:bg-blue/5 sm:px-4"
                 >
                   Log out
                 </SubmitButton>
@@ -76,18 +77,19 @@ export async function Nav() {
             <>
               <Link
                 href="/login"
-                className="rounded-full border border-blue px-4 py-1.5 text-sm font-semibold text-blue hover:bg-blue/5"
+                className="rounded-full border border-blue px-3 py-2 text-sm font-semibold text-blue hover:bg-blue/5 sm:px-4"
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="rounded-full bg-blue px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue/90"
+                className="rounded-full bg-blue px-3 py-2 text-sm font-semibold text-white hover:bg-blue/90 sm:px-4"
               >
                 Sign Up
               </Link>
             </>
           )}
+          <MobileNavMenu links={navLinks} />
         </div>
       </div>
     </header>

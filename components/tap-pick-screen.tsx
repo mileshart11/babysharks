@@ -45,21 +45,40 @@ export function TapPickScreen({
           type="button"
           disabled={isPending}
           onClick={() => choose(team.id)}
-          className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center text-navy transition-opacity active:opacity-80 disabled:opacity-60 sm:gap-6"
-          style={{ backgroundColor: color }}
+          className="flex flex-1 flex-col items-center justify-center overflow-y-auto text-center text-navy transition-opacity active:opacity-80 disabled:opacity-60"
+          style={{
+            backgroundColor: color,
+            gap: 'clamp(0.5rem, 3vmin, 1.5rem)',
+            padding: 'clamp(0.75rem, 4vmin, 2rem)',
+          }}
         >
-          <span className="font-display text-2xl sm:text-4xl">{team.city}</span>
+          <span
+            className="font-display"
+            style={{ fontSize: 'clamp(1.1rem, 5vmin, 2.5rem)' }}
+          >
+            {team.city}
+          </span>
           {team.logo_url && (
-            <div className="flex h-44 w-44 items-center justify-center rounded-full bg-white shadow-lg sm:h-64 sm:w-64 md:h-72 md:w-72">
+            <div
+              className="flex shrink-0 items-center justify-center rounded-full bg-white shadow-lg"
+              style={{
+                width: 'clamp(5.5rem, 24vmin, 15rem)',
+                height: 'clamp(5.5rem, 24vmin, 15rem)',
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={team.logo_url}
                 alt={team.name}
-                className="h-36 w-36 object-contain sm:h-52 sm:w-52 md:h-60 md:w-60"
+                className="object-contain"
+                style={{ width: '78%', height: '78%' }}
               />
             </div>
           )}
-          <span className="font-display text-3xl leading-tight font-bold sm:text-5xl">
+          <span
+            className="font-display leading-tight font-bold"
+            style={{ fontSize: 'clamp(1.4rem, 7vmin, 3.5rem)' }}
+          >
             {team.name}
           </span>
         </button>
