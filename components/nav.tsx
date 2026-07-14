@@ -50,7 +50,7 @@ export async function Nav() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-medium text-navy md:flex">
+        <nav className="hidden items-center gap-6 font-display text-sm text-navy md:flex">
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-blue">
               {link.label}
@@ -58,7 +58,7 @@ export async function Nav() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 font-display sm:gap-3">
           {user ? (
             <>
               <span className="hidden text-sm text-navy/70 sm:inline">
