@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { computeRecord } from '@/lib/records'
@@ -78,15 +77,18 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center">
-              <Image
-                src="/logo.png"
-                alt="Baby Sharks"
-                width={480}
-                height={320}
-                priority
-                className="h-auto w-full max-w-md drop-shadow-2xl"
-              />
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-3">
+              {(teams ?? [])
+                .slice()
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .map((team) => (
+                  <div
+                    key={team.id}
+                    className="flex aspect-square items-center justify-center rounded-full bg-white/90 p-1.5 shadow-md"
+                  >
+                    <TeamLogo team={team} size={36} />
+                  </div>
+                ))}
             </div>
           </div>
         </section>
