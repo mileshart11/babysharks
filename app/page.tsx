@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { computeRecord } from '@/lib/records'
 import { relativeTime } from '@/lib/time'
+import { fadeColor } from '@/lib/colors'
 import { SharkAvatar } from '@/components/shark-avatar'
 import { TeamLogo } from '@/components/team-logo'
 import type { BabyShark, Game, NflTeam, Pick } from '@/lib/supabase/types'
@@ -258,12 +259,12 @@ export default async function Home() {
 
             return (
               <li key={pick.id}>
-                <article className="rounded-2xl border border-fog bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-3">
+                <article className="overflow-hidden rounded-2xl border border-fog bg-white shadow-sm">
+                  <div className="flex items-center gap-3 p-4 pb-3">
                     <Link href={`/baby-sharks/${shark.id}`}>
                       <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={44} />
                     </Link>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <Link
                         href={`/baby-sharks/${shark.id}`}
                         className="font-display text-navy hover:underline"
@@ -272,14 +273,29 @@ export default async function Home() {
                       </Link>
                       <p className="text-xs text-navy/50">{relativeTime(pick.created_at)}</p>
                     </div>
+                    <span className="shrink-0 rounded-full bg-gold/25 px-2.5 py-1 text-xs font-semibold text-navy/70">
+                      Week {game.week}
+                    </span>
                   </div>
-                  <p className="mt-3 text-sm text-navy">
-                    Picked the{' '}
-                    <strong>
-                      {pickedTeam?.city} {pickedTeam?.name}
-                    </strong>{' '}
-                    to beat the {opponent?.city} {opponent?.name} &mdash; Week {game.week}.
-                  </p>
+
+                  <div
+                    className="flex items-center gap-3 px-4 py-4"
+                    style={{
+                      backgroundColor: fadeColor(pickedTeam?.primary_color ?? '#0e3b6e', 0.62),
+                    }}
+                  >
+                    <TeamLogo team={pickedTeam} size={56} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold tracking-wide text-navy/50 uppercase">
+                        🏈 Riding with
+                      </p>
+                      <p className="font-display text-lg leading-tight text-navy">
+                        {pickedTeam?.city} {pickedTeam?.name}
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-display text-sm text-navy/40">vs</span>
+                    <TeamLogo team={opponent} size={40} />
+                  </div>
                 </article>
               </li>
             )
