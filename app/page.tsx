@@ -107,7 +107,7 @@ export default async function Home() {
 
         <section className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-12 md:grid-cols-2">
           <div className="rounded-2xl border border-fog p-5">
-            <h2 className="font-display text-lg text-navy">Live Games</h2>
+            <h2 className="font-display text-lg text-navy">Upcoming Games</h2>
             <ul className="mt-4 flex flex-col gap-3">
               {(games ?? []).map((game) => {
                 const home = teamsById.get(game.home_team_id)
