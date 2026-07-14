@@ -15,10 +15,11 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 px-4 sm:flex-row sm:justify-between">
         <div className="flex items-center gap-2">
           <span
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg"
+            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10"
             aria-hidden="true"
           >
-            🐠
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/mascot-icon.png" alt="" className="h-full w-full object-cover" />
           </span>
           <p className="text-sm text-white/80">
             Baby Sharks &copy; {new Date().getFullYear()} | Pick. Play. Win!

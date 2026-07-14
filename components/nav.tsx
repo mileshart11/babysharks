@@ -43,8 +43,8 @@ export async function Nav() {
           <Image
             src="/logo-nav.png"
             alt="Baby Sharks"
-            width={202}
-            height={80}
+            width={236}
+            height={100}
             priority
             className="h-12 w-auto sm:h-20"
           />
