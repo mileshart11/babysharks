@@ -40,8 +40,17 @@ if (teamError || !team) {
   process.exit(1)
 }
 
-const info = await sharp(sourcePath).trim().toFile(destAbsolute)
-console.log(`Saved trimmed logo (${info.width}x${info.height}) to public${destRelative}`)
+// Source files come straight out of image generators at ~1000-1500px;
+// the largest on-site usage (tap-pick screen) tops out around 240px even
+// on retina, so anything bigger is wasted bytes on every page load.
+const MAX_DIMENSION = 500
+
+const info = await sharp(sourcePath)
+  .trim()
+  .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
+  .png({ compressionLevel: 9, effort: 10 })
+  .toFile(destAbsolute)
+console.log(`Saved trimmed + optimized logo (${info.width}x${info.height}, ${Math.round(info.size / 1024)}KB) to public${destRelative}`)
 
 const { error } = await supabase
   .from('nfl_teams')
