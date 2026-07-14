@@ -246,7 +246,7 @@ export default async function Home() {
           <p className="text-navy/60">No picks yet from your Baby Sharks.</p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {feedPicks.map((pick) => {
             const shark = sharksById.get(pick.baby_shark_id)
             const game = gamesById.get(pick.game_id)
@@ -256,47 +256,50 @@ export default async function Home() {
             const opponentId =
               pick.picked_team_id === game.home_team_id ? game.away_team_id : game.home_team_id
             const opponent = teamsById.get(opponentId)
+            const teamColor = pickedTeam?.primary_color ?? '#0e3b6e'
 
             return (
               <li key={pick.id}>
-                <article className="overflow-hidden rounded-2xl border border-fog bg-white shadow-sm">
-                  <div className="flex items-center gap-3 p-4 pb-3">
-                    <Link href={`/baby-sharks/${shark.id}`}>
-                      <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={44} />
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/baby-sharks/${shark.id}`}
-                        className="font-display text-navy hover:underline"
-                      >
-                        {shark.name}
-                      </Link>
-                      <p className="text-xs text-navy/50">{relativeTime(pick.created_at)}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-gold/25 px-2.5 py-1 text-xs font-semibold text-navy/70">
+                <Link
+                  href={`/baby-sharks/${shark.id}`}
+                  className="relative flex aspect-square flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:scale-[1.02]"
+                  style={{
+                    background: `linear-gradient(155deg, ${fadeColor(teamColor, 0.35)}, ${fadeColor(teamColor, 0.05)})`,
+                  }}
+                >
+                  <div className="flex items-center justify-between px-2.5 pt-2.5">
+                    <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-navy shadow-sm">
                       Week {game.week}
+                    </span>
+                    <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] text-navy/60 shadow-sm">
+                      {relativeTime(pick.created_at)}
                     </span>
                   </div>
 
-                  <div
-                    className="flex items-center gap-3 px-4 py-4"
-                    style={{
-                      backgroundColor: fadeColor(pickedTeam?.primary_color ?? '#0e3b6e', 0.62),
-                    }}
-                  >
-                    <TeamLogo team={pickedTeam} size={56} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold tracking-wide text-navy/50 uppercase">
-                        🏈 Riding with
-                      </p>
-                      <p className="font-display text-lg leading-tight text-navy">
-                        {pickedTeam?.city} {pickedTeam?.name}
-                      </p>
+                  <div className="flex flex-1 items-center justify-center p-3">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
+                      <TeamLogo team={pickedTeam} size={64} />
                     </div>
-                    <span className="shrink-0 font-display text-sm text-navy/40">vs</span>
-                    <TeamLogo team={opponent} size={40} />
                   </div>
-                </article>
+
+                  <div className="bg-navy/85 px-2.5 py-2 backdrop-blur-sm">
+                    <p className="truncate font-display text-xs leading-tight text-white">
+                      {pickedTeam?.city} {pickedTeam?.name}
+                    </p>
+                    <div className="mt-1.5 flex items-center justify-between gap-1.5">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={18} />
+                        <span className="truncate text-[11px] font-semibold text-white/90">
+                          {shark.name}
+                        </span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <span className="text-[10px] text-white/50">vs</span>
+                        <TeamLogo team={opponent} size={14} />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               </li>
             )
           })}
