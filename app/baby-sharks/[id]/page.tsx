@@ -134,24 +134,24 @@ export default async function BabySharkPage(props: {
                 return (
                   <li
                     key={game.id}
-                    className="rounded-2xl border border-fog bg-white p-4 shadow-sm"
+                    className="rounded-2xl border border-fog bg-white p-3 shadow-sm"
                   >
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center gap-1">
                       <div
-                        className={`flex flex-1 flex-col items-center gap-1 rounded-xl p-2 text-center ${awayPicked ? 'bg-sky/20' : ''}`}
+                        className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-center ${awayPicked ? 'bg-sky/20' : ''}`}
                       >
-                        <TeamLogo team={away} size={48} />
+                        <TeamLogo team={away} size={108} />
                         <span className="text-xs font-medium text-navy">{teamLabel(away)}</span>
                       </div>
                       <span className="font-display text-sm text-navy/40">@</span>
                       <div
-                        className={`flex flex-1 flex-col items-center gap-1 rounded-xl p-2 text-center ${homePicked ? 'bg-sky/20' : ''}`}
+                        className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-center ${homePicked ? 'bg-sky/20' : ''}`}
                       >
-                        <TeamLogo team={home} size={48} />
+                        <TeamLogo team={home} size={108} />
                         <span className="text-xs font-medium text-navy">{teamLabel(home)}</span>
                       </div>
                     </div>
-                    <p className="mt-2 text-center text-xs text-navy/50">
+                    <p className="mt-1 text-center text-xs text-navy/50">
                       {kickoff.toLocaleString(undefined, {
                         weekday: 'short',
                         month: 'short',
@@ -162,7 +162,7 @@ export default async function BabySharkPage(props: {
                     </p>
 
                     {isOwner ? (
-                      <div className="mt-3 flex items-center justify-center gap-2">
+                      <div className="mt-2 flex items-center justify-center gap-2">
                         <Link
                           href={`/baby-sharks/${shark.id}/tap-pick/${game.id}`}
                           className="rounded-full bg-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue/90"
@@ -184,7 +184,7 @@ export default async function BabySharkPage(props: {
                       </div>
                     ) : (
                       !pick && (
-                        <p className="mt-3 text-center text-sm text-navy/50">No pick yet</p>
+                        <p className="mt-2 text-center text-sm text-navy/50">No pick yet</p>
                       )
                     )}
                   </li>
