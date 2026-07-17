@@ -18,13 +18,15 @@ export async function Nav() {
   } = await supabase.auth.getUser()
 
   let username: string | null = null
+  let isAdmin = false
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('username')
+      .select('username, is_admin')
       .eq('id', user.id)
       .single()
     username = profile?.username ?? null
+    isAdmin = profile?.is_admin ?? false
   }
 
   const navLinks = user
@@ -33,6 +35,7 @@ export async function Nav() {
         { href: '/manage-sharks', label: 'Manage My Sharks' },
         { href: '/following', label: 'Following' },
         ...BASE_NAV_LINKS.slice(1),
+        ...(isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
       ]
     : BASE_NAV_LINKS
 

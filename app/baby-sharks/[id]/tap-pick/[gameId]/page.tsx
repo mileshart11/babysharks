@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isPickLocked } from '@/lib/time'
 import { TapPickScreen } from '@/components/tap-pick-screen'
 
 export default async function TapPickPage(props: {
@@ -20,6 +21,12 @@ export default async function TapPickPage(props: {
 
   if (!shark || !game) notFound()
   if (shark.owner_id !== user.id) redirect(`/baby-sharks/${id}`)
+
+  if (isPickLocked(game.kickoff_at)) {
+    redirect(
+      `/baby-sharks/${id}?error=` + encodeURIComponent('Picks lock 10 minutes before kickoff.')
+    )
+  }
 
   const [{ data: homeTeam }, { data: awayTeam }] = await Promise.all([
     supabase.from('nfl_teams').select('*').eq('id', game.home_team_id).single(),

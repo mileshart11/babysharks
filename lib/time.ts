@@ -1,3 +1,9 @@
+const LOCK_MINUTES_BEFORE_KICKOFF = 10
+
+export function isPickLocked(kickoffAtIso: string) {
+  return Date.now() >= new Date(kickoffAtIso).getTime() - LOCK_MINUTES_BEFORE_KICKOFF * 60_000
+}
+
 export function relativeTime(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime()
   const diffSec = Math.floor(diffMs / 1000)

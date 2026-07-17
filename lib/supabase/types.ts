@@ -2,6 +2,7 @@ export interface Profile {
   id: string
   username: string
   display_name: string | null
+  is_admin: boolean
   created_at: string
 }
 

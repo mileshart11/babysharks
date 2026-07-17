@@ -24,11 +24,71 @@ function mapTeamCode(code) {
   return TEAM_CODE_MAP[code] ?? code
 }
 
+// Handles quoted fields (which may contain commas) properly, unlike a bare
+// line.split(','). nflverse's CSV hasn't needed this so far, but a naive
+// split silently misaligns every column the moment one ever does.
+function parseCsvLine(line) {
+  const fields = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"'
+          i++
+        } else {
+          inQuotes = false
+        }
+      } else {
+        current += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      fields.push(current)
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  fields.push(current)
+  return fields
+}
+
+const REQUIRED_COLUMNS = [
+  'game_id',
+  'season',
+  'game_type',
+  'week',
+  'gameday',
+  'gametime',
+  'away_team',
+  'away_score',
+  'home_team',
+  'home_score',
+]
+
 function parseCsv(text) {
-  const lines = text.split('\n').filter((line) => line.length > 0)
-  const header = lines[0].split(',')
+  const lines = text
+    .split('\n')
+    .map((line) => line.replace(/\r$/, ''))
+    .filter((line) => line.length > 0)
+  const header = parseCsvLine(lines[0])
   const colIndex = Object.fromEntries(header.map((name, i) => [name, i]))
-  const rows = lines.slice(1).map((line) => line.split(','))
+
+  const missing = REQUIRED_COLUMNS.filter((name) => !(name in colIndex))
+  if (missing.length > 0) {
+    console.error(
+      `nflverse CSV is missing expected column(s): ${missing.join(', ')}. ` +
+        'The upstream format may have changed — check the CSV header manually.'
+    )
+    process.exit(1)
+  }
+
+  const rows = lines.slice(1).map(parseCsvLine)
   return { colIndex, rows }
 }
 

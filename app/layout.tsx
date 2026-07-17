@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fredoka } from "next/font/google";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
@@ -22,6 +22,10 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   title: "BabySharks",
   description: "Pick teams. Track records. Follow your favorite Baby Sharks.",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light",
 };
 
 export default function RootLayout({

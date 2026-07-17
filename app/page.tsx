@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { computeRecord } from '@/lib/records'
+import { rankSharks } from '@/lib/records'
 import { relativeTime } from '@/lib/time'
-import { fadeColor } from '@/lib/colors'
 import { SharkAvatar } from '@/components/shark-avatar'
 import { TeamLogo } from '@/components/team-logo'
 import type { BabyShark, Game, NflTeam, Pick } from '@/lib/supabase/types'
@@ -29,16 +28,17 @@ export default async function Home() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    const [{ data: teams }, { data: allGames }, { data: sharks }, { data: allPicks }] =
+    const [{ data: teams }, { data: allGames }, { data: allSharks }, { data: allPicks }] =
       await Promise.all([
         supabase.from('nfl_teams').select('*'),
         supabase.from('games').select('*').order('week').order('kickoff_at'),
-        supabase.from('baby_sharks').select('*').order('created_at').limit(4),
+        supabase.from('baby_sharks').select('*'),
         supabase.from('picks').select('*'),
       ])
 
     const teamsById = new Map((teams ?? []).map((t) => [t.id, t]))
     const games = (allGames ?? []).slice(0, 3)
+    const topSharks = rankSharks(allSharks ?? [], allPicks ?? [], allGames ?? []).slice(0, 4)
 
     return (
       <div className="flex flex-1 flex-col">
@@ -146,26 +146,23 @@ export default async function Home() {
           <div className="rounded-2xl border border-fog p-5">
             <h2 className="font-display text-lg text-navy">Leaderboard</h2>
             <ul className="mt-4 flex flex-col gap-3">
-              {(sharks ?? []).map((shark: BabyShark, i) => {
-                const { wins, losses } = computeRecord(shark.id, allPicks ?? [], allGames ?? [])
-                return (
-                  <li
-                    key={shark.id}
-                    className="flex items-center justify-between text-sm text-navy"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-xs font-bold text-navy">
-                        {i + 1}
-                      </span>
-                      {shark.name}
+              {topSharks.map((entry, i) => (
+                <li
+                  key={entry.shark.id}
+                  className="flex items-center justify-between text-sm text-navy"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-xs font-bold text-navy">
+                      {i + 1}
                     </span>
-                    <span className="text-navy/60">
-                      {wins}-{losses}
-                    </span>
-                  </li>
-                )
-              })}
-              {(!sharks || sharks.length === 0) && (
+                    {entry.shark.name}
+                  </span>
+                  <span className="text-navy/60">
+                    {entry.wins}-{entry.losses}
+                  </span>
+                </li>
+              ))}
+              {topSharks.length === 0 && (
                 <li className="text-sm text-navy/50">No Baby Sharks yet &mdash; be the first!</li>
               )}
             </ul>
@@ -221,6 +218,47 @@ export default async function Home() {
   const gamesById = new Map(feedGames.map((g) => [g.id, g]))
   const teamsById = new Map(feedTeams.map((t) => [t.id, t]))
 
+  // Group picks by (shark, week) so the feed reads as "here's what each
+  // shark picked this week" instead of one card per individual pick.
+  type FeedGroup = {
+    key: string
+    shark: BabyShark
+    week: number
+    picks: { pick: Pick; team: NflTeam | undefined; opponent: NflTeam | undefined }[]
+    latestCreatedAt: string
+  }
+
+  const groups = new Map<string, FeedGroup>()
+  for (const pick of feedPicks) {
+    const shark = sharksById.get(pick.baby_shark_id)
+    const game = gamesById.get(pick.game_id)
+    if (!shark || !game) continue
+
+    const key = `${shark.id}-${game.week}`
+    const pickedTeam = teamsById.get(pick.picked_team_id)
+    const opponentId =
+      pick.picked_team_id === game.home_team_id ? game.away_team_id : game.home_team_id
+    const opponent = teamsById.get(opponentId)
+
+    const group = groups.get(key)
+    if (group) {
+      group.picks.push({ pick, team: pickedTeam, opponent })
+      if (pick.created_at > group.latestCreatedAt) group.latestCreatedAt = pick.created_at
+    } else {
+      groups.set(key, {
+        key,
+        shark,
+        week: game.week,
+        picks: [{ pick, team: pickedTeam, opponent }],
+        latestCreatedAt: pick.created_at,
+      })
+    }
+  }
+
+  const feedGroups = Array.from(groups.values()).sort((a, b) =>
+    b.latestCreatedAt.localeCompare(a.latestCreatedAt)
+  )
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-8">
       <h1 className="font-display text-xl text-navy">Your Feed</h1>
@@ -240,7 +278,7 @@ export default async function Home() {
             Create a Baby Shark
           </Link>
         </div>
-      ) : feedPicks.length === 0 ? (
+      ) : feedGroups.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-fog p-8 text-center">
           <span className="text-4xl" aria-hidden="true">
             🏈
@@ -248,63 +286,40 @@ export default async function Home() {
           <p className="text-navy/60">No picks yet from your Baby Sharks.</p>
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {feedPicks.map((pick) => {
-            const shark = sharksById.get(pick.baby_shark_id)
-            const game = gamesById.get(pick.game_id)
-            if (!shark || !game) return null
-
-            const pickedTeam = teamsById.get(pick.picked_team_id)
-            const opponentId =
-              pick.picked_team_id === game.home_team_id ? game.away_team_id : game.home_team_id
-            const opponent = teamsById.get(opponentId)
-            const teamColor = pickedTeam?.primary_color ?? '#0e3b6e'
-
-            return (
-              <li key={pick.id}>
-                <Link
-                  href={`/baby-sharks/${shark.id}`}
-                  className="relative flex aspect-square flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:scale-[1.02]"
-                  style={{
-                    background: `linear-gradient(155deg, ${fadeColor(teamColor, 0.35)}, ${fadeColor(teamColor, 0.05)})`,
-                  }}
-                >
-                  <div className="flex items-center justify-between px-2.5 pt-2.5">
-                    <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-navy shadow-sm">
-                      Week {game.week}
-                    </span>
-                    <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] text-navy/60 shadow-sm">
-                      {relativeTime(pick.created_at)}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-1 items-center justify-center p-3">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
-                      <TeamLogo team={pickedTeam} size={64} />
+        <ul className="flex flex-col gap-3">
+          {feedGroups.map((group) => (
+            <li key={group.key}>
+              <Link
+                href={`/baby-sharks/${group.shark.id}`}
+                className="flex flex-col gap-3 rounded-2xl border border-fog bg-white p-4 shadow-sm transition-colors hover:border-blue/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <SharkAvatar name={group.shark.name} avatarUrl={group.shark.avatar_url} size={36} />
+                    <div>
+                      <p className="font-display text-sm text-navy">{group.shark.name}</p>
+                      <p className="text-xs text-navy/50">Week {group.week}</p>
                     </div>
                   </div>
-
-                  <div className="bg-navy/85 px-2.5 py-2 backdrop-blur-sm">
-                    <p className="truncate font-display text-xs leading-tight text-white">
-                      {pickedTeam?.city} {pickedTeam?.name}
-                    </p>
-                    <div className="mt-1.5 flex items-center justify-between gap-1.5">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <SharkAvatar name={shark.name} avatarUrl={shark.avatar_url} size={18} />
-                        <span className="truncate text-[11px] font-semibold text-white/90">
-                          {shark.name}
-                        </span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <span className="text-[10px] text-white/50">vs</span>
-                        <TeamLogo team={opponent} size={14} />
-                      </div>
+                  <span className="shrink-0 text-xs text-navy/40">
+                    {relativeTime(group.latestCreatedAt)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.picks.map(({ pick, team, opponent }) => (
+                    <div
+                      key={pick.id}
+                      className="flex items-center gap-1.5 rounded-full bg-sky/10 py-1 pr-2.5 pl-1"
+                    >
+                      <TeamLogo team={team} size={22} />
+                      <span className="text-xs font-medium text-navy">{team?.city}</span>
+                      <span className="text-[10px] text-navy/40">vs {opponent?.id ?? '?'}</span>
                     </div>
-                  </div>
-                </Link>
-              </li>
-            )
-          })}
+                  ))}
+                </div>
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </div>

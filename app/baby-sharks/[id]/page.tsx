@@ -7,9 +7,11 @@ import {
   deletePick,
 } from '@/app/baby-sharks/actions'
 import { computeRecord } from '@/lib/records'
+import { isPickLocked } from '@/lib/time'
 import { SubmitButton } from '@/components/submit-button'
 import { SharkAvatar } from '@/components/shark-avatar'
 import { TeamLogo } from '@/components/team-logo'
+import { LocalKickoff } from '@/components/local-kickoff'
 import type { Game, NflTeam, Pick } from '@/lib/supabase/types'
 
 function teamLabel(team: NflTeam | undefined) {
@@ -18,8 +20,10 @@ function teamLabel(team: NflTeam | undefined) {
 
 export default async function BabySharkPage(props: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string }>
 }) {
   const { id } = await props.params
+  const { error } = await props.searchParams
   const supabase = await createClient()
 
   const [{ data: shark }, { data: teams }, { data: games }, { data: picks }] =
@@ -71,6 +75,9 @@ export default async function BabySharkPage(props: {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-12">
+      {error && (
+        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -127,7 +134,7 @@ export default async function BabySharkPage(props: {
                 const home = teamsById.get(game.home_team_id)
                 const away = teamsById.get(game.away_team_id)
                 const pick = picksByGameId.get(game.id)
-                const kickoff = new Date(game.kickoff_at)
+                const locked = isPickLocked(game.kickoff_at)
                 const awayPicked = pick?.picked_team_id === game.away_team_id
                 const homePicked = pick?.picked_team_id === game.home_team_id
 
@@ -152,36 +159,36 @@ export default async function BabySharkPage(props: {
                       </div>
                     </div>
                     <p className="mt-1 text-center text-xs text-navy/50">
-                      {kickoff.toLocaleString(undefined, {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
+                      <LocalKickoff iso={game.kickoff_at} />
                     </p>
 
                     {isOwner ? (
-                      <div className="mt-2 flex items-center justify-center gap-2">
-                        <Link
-                          href={`/baby-sharks/${shark.id}/tap-pick/${game.id}`}
-                          className="rounded-full bg-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue/90"
-                        >
-                          {pick ? '🖐️ Change Pick' : '🖐️ Tap to Pick'}
-                        </Link>
-                        {pick && (
-                          <form action={deletePick}>
-                            <input type="hidden" name="baby_shark_id" value={shark.id} />
-                            <input type="hidden" name="game_id" value={game.id} />
-                            <SubmitButton
-                              pendingText="Removing…"
-                              className="rounded-full border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                            >
-                              Delete pick
-                            </SubmitButton>
-                          </form>
-                        )}
-                      </div>
+                      locked ? (
+                        <p className="mt-2 text-center text-sm text-navy/50">
+                          {pick ? '🔒 Pick locked' : '🔒 Picks locked — no pick made'}
+                        </p>
+                      ) : (
+                        <div className="mt-2 flex items-center justify-center gap-2">
+                          <Link
+                            href={`/baby-sharks/${shark.id}/tap-pick/${game.id}`}
+                            className="rounded-full bg-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue/90"
+                          >
+                            {pick ? '🖐️ Change Pick' : '🖐️ Tap to Pick'}
+                          </Link>
+                          {pick && (
+                            <form action={deletePick}>
+                              <input type="hidden" name="baby_shark_id" value={shark.id} />
+                              <input type="hidden" name="game_id" value={game.id} />
+                              <SubmitButton
+                                pendingText="Removing…"
+                                className="rounded-full border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                              >
+                                Delete pick
+                              </SubmitButton>
+                            </form>
+                          )}
+                        </div>
+                      )
                     ) : (
                       !pick && (
                         <p className="mt-2 text-center text-sm text-navy/50">No pick yet</p>

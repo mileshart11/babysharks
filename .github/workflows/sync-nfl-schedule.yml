@@ -2,10 +2,10 @@ name: Sync NFL schedule
 
 on:
   schedule:
-    # Every Tuesday at 09:00 UTC — after Monday Night Football wraps, so
-    # the previous week's final scores are in. Also catches the new
-    # season's schedule automatically whenever nflverse publishes it.
-    - cron: '0 9 * * 2'
+    # Hourly. The sync is a cheap, fully idempotent upsert (by external_id),
+    # so running it often just means scores/records show up sooner after
+    # each game — no downside to the higher frequency.
+    - cron: '0 * * * *'
   workflow_dispatch: {}
 
 jobs:

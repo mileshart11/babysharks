@@ -57,6 +57,8 @@ export async function createBabyShark(formData: FormData) {
   redirect(`/baby-sharks/${data.id}`)
 }
 
+const AVATAR_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif']
+
 export async function updateBabyShark(formData: FormData) {
   const id = String(formData.get('id') ?? '')
   const name = String(formData.get('name') ?? '').trim()
@@ -81,10 +83,21 @@ export async function updateBabyShark(formData: FormData) {
   }
 
   const update: Record<string, string | null> = { name, bio: bio || null, shark_type: sharkType }
+  let oldAvatarPath: string | null = null
 
   if (avatar instanceof File && avatar.size > 0) {
-    const extension = avatar.name.split('.').pop() || 'jpg'
+    const rawExtension = avatar.name.split('.').pop()?.toLowerCase() ?? ''
+    const extension = AVATAR_EXTENSIONS.includes(rawExtension) ? rawExtension : 'jpg'
     const path = `${id}/avatar-${Date.now()}.${extension}`
+
+    // Grab the current avatar path before we overwrite it, so the old file
+    // can be removed from storage once the new one is safely in place.
+    const { data: existing } = await supabase
+      .from('baby_sharks')
+      .select('avatar_url')
+      .eq('id', id)
+      .single()
+    oldAvatarPath = existing?.avatar_url?.split('/avatars/').pop() ?? null
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
@@ -108,6 +121,11 @@ export async function updateBabyShark(formData: FormData) {
 
   if (error) {
     redirect(`/baby-sharks/${id}/edit?error=` + encodeURIComponent(error.message))
+  }
+
+  if (oldAvatarPath) {
+    const { error: removeError } = await supabase.storage.from('avatars').remove([oldAvatarPath])
+    if (removeError) console.error('Failed to remove old avatar:', removeError)
   }
 
   revalidatePath(`/baby-sharks/${id}`)
@@ -153,7 +171,7 @@ export async function unfollowBabyShark(formData: FormData) {
   revalidatePath(`/baby-sharks/${babySharkId}`)
 }
 
-export async function makePick(formData: FormData) {
+export async function makePick(formData: FormData): Promise<{ error?: string }> {
   const babySharkId = String(formData.get('baby_shark_id') ?? '')
   const gameId = String(formData.get('game_id') ?? '')
   const pickedTeamId = String(formData.get('picked_team_id') ?? '')
@@ -171,9 +189,12 @@ export async function makePick(formData: FormData) {
       { onConflict: 'baby_shark_id,game_id' }
     )
 
-  if (error) console.error('makePick error:', error)
+  // Returned (not redirected) since this is called directly from a client
+  // component, not bound to a <form action>.
+  if (error) return { error: error.message }
 
   revalidatePath(`/baby-sharks/${babySharkId}`)
+  return {}
 }
 
 export async function deletePick(formData: FormData) {
@@ -192,7 +213,9 @@ export async function deletePick(formData: FormData) {
     .eq('baby_shark_id', babySharkId)
     .eq('game_id', gameId)
 
-  if (error) console.error('deletePick error:', error)
+  if (error) {
+    redirect(`/baby-sharks/${babySharkId}?error=` + encodeURIComponent(error.message))
+  }
 
   revalidatePath(`/baby-sharks/${babySharkId}`)
 }
